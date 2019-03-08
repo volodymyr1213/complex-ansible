@@ -1,0 +1,5 @@
+image: ""
+instance_type: "t2.micro"
+vpc_subnet_id: ""
+key_name: "ansible"
+region: ""
