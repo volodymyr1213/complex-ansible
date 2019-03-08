@@ -1,0 +1,49 @@
+---
+- name: Installs r1soft agent
+  hosts: all              
+  become: yes 
+  become_method: sudo 
+  tasks: 
+    - name: Create repo 
+      when: ansible_os_family == "RedHat"
+      copy: 
+        src: r1soft.repo
+        dest: /etc/yum.repos.d 
+      ignore_errors: true
+
+     
+    - name: Create repo for Ubuntu 
+      when: ansible_os_family == "Debian" 
+      shell: "{{ item }}"
+      with_items: 
+        - "apt-get install wget -y"
+        - "echo deb http://repo.r1soft.com/apt stable main >> /etc/apt/sources.list"  
+        - "wget http://repo.r1soft.com/r1soft.asc"
+        - "apt-key add r1soft.asc"
+        - "apt-get install serverbackup-enterprise-agent"
+
+
+    - name:  Install 
+      package:
+        name: serverbackup-enterprise-agent
+        state: installed 
+      ignore_errors: true
+
+    - name: Start agent 
+      when: ansible_os_family == "RedHat"
+      systemd:
+        name: sbm-agent
+        state: restarted 
+      ignore_errors: true
+
+    - name: stop firewall
+      when: ansible_os_family == "RedHat"
+      systemd: 
+        name: firewalld
+        state: stopped 
+      ignore_errors: true
+
+
+    - name: Get key
+      shell: "r1soft-setup --get-key  http://63.35.236.183:8080"
+      ignore_errors: true
